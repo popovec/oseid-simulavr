@@ -65,6 +65,11 @@
 #include "gdb.h"
 #include "sig.h"
 
+// dirty access to EERPOM
+uint8_t gdb_ee_read(int adr);
+void    gdb_ee_write(int adr,uint8_t data);
+
+#define USE_EEPROM_SPACE
 /* *INDENT-OFF* */
 #ifndef DOXYGEN                 /* have doxygen system ignore this. */
 enum
@@ -594,11 +599,11 @@ gdb_read_memory (GdbComm_T *comm, int fd, char *pkt)
 
     buf = avr_new0 (uint8_t, (len * 2) + 1);
 
-    if ((addr & MEM_SPACE_MASK) == SRAM_OFFSET)
+    if (addr >= SRAM_OFFSET && addr < EEPROM_OFFSET)
     {
         /* addressing sram */
 
-        addr = addr & ~MEM_SPACE_MASK; /* remove the offset bits */
+        addr -= SRAM_OFFSET;
 
         /* Return an error to gdb if it tries to read or write any of the 32
            general purpse registers. This allows gdb to know when a zero
@@ -622,11 +627,9 @@ gdb_read_memory (GdbComm_T *comm, int fd, char *pkt)
             }
         }
     }
-    else if ((addr & MEM_SPACE_MASK) == FLASH_OFFSET)
+    else if (addr < SRAM_OFFSET)
     {
         /* addressing flash */
-
-        addr = addr & ~MEM_SPACE_MASK; /* remove the offset bits */
 
         is_odd_addr = addr % 2;
         i = 0;
@@ -664,14 +667,17 @@ gdb_read_memory (GdbComm_T *comm, int fd, char *pkt)
         }
     }
 #if defined(USE_EEPROM_SPACE)
-    else if ((addr & MEM_SPACE_MASK) == EEPROM_OFFSET)
+    else if (addr >= EEPROM_OFFSET)
     {
         /* addressing eeprom */
 
-        addr = addr & ~MEM_SPACE_MASK; /* remove the offset bits */
+        addr -= EEPROM_OFFSET;
 
-        avr_warning ("reading of eeprom not yet implemented: 0x%x.\n", addr);
-        snprintf (buf, len * 2, "E%02x", EIO);
+        for(i=0;i<len;i++){
+                bval = gdb_ee_read (addr + i);
+                buf[i * 2] = HEX_DIGIT[bval >> 4];
+                buf[i * 2 + 1] = HEX_DIGIT[bval & 0xf];
+        }
     }
 #endif
     else
@@ -702,11 +708,11 @@ gdb_write_memory (GdbComm_T *comm, int fd, char *pkt)
 
     pkt += gdb_get_addr_len (pkt, ',', ':', &addr, &len);
 
-    if ((addr & MEM_SPACE_MASK) == SRAM_OFFSET)
+    if (addr >= SRAM_OFFSET && addr < EEPROM_OFFSET)
     {
         /* addressing sram */
 
-        addr = addr & ~MEM_SPACE_MASK; /* remove the offset bits */
+        addr -= SRAM_OFFSET;
 
         /* Return error. See gdb_read_memory for reasoning. */
         /* FIXME: [TRoth 2002/03/31] This isn't working quite the way I
@@ -726,7 +732,7 @@ gdb_write_memory (GdbComm_T *comm, int fd, char *pkt)
             }
         }
     }
-    else if ((addr & MEM_SPACE_MASK) == FLASH_OFFSET)
+    else if (addr < SRAM_OFFSET)
     {
         /* addressing flash */
 
@@ -735,7 +741,6 @@ gdb_write_memory (GdbComm_T *comm, int fd, char *pkt)
         if (comm->write_flash && comm->write_flash_lo8
             && comm->write_flash_hi8)
         {
-            addr = addr & ~MEM_SPACE_MASK; /* remove the offset bits */
 
             is_odd_addr = addr % 2;
 
@@ -775,14 +780,19 @@ gdb_write_memory (GdbComm_T *comm, int fd, char *pkt)
         }
     }
 #if defined (USE_EEPROM_SPACE)
-    else if ((addr & MEM_SPACE_MASK) == EEPROM_OFFSET)
+    else if (addr >= EEPROM_OFFSET)
     {
         /* addressing eeprom */
 
-        addr = addr & ~MEM_SPACE_MASK; /* remove the offset bits */
+        addr -= EEPROM_OFFSET;
 
-        avr_warning ("writing of eeprom not yet implemented: 0x%x.\n", addr);
-        snprintf (reply, sizeof (reply), "E%02x", EIO);
+        avr_warning ("Gdb asked to write eeprom address = %x len %d\n",addr,len);
+            for (i = addr; i < addr + len; i++)
+            {
+                bval = hex2nib (*pkt++) << 4;
+                bval += hex2nib (*pkt++);
+                gdb_ee_write (i, bval);
+            }
     }
 #endif
     else

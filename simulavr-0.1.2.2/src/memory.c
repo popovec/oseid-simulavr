@@ -416,7 +416,7 @@ mem_sram_display (Memory *mem, FILE * f_core, int base, int size)
             line[0] = '\0';
         }
         snprintf (buf, 80, "%02x ", mem_read (mem, i));
-        strncat (line, buf, 80 - strlen(line) - 1);
+        strncat (line, buf, 80 - strnlen(line,79) - 1);
     }
     if (dup > 0)
     {

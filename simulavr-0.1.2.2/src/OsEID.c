@@ -246,7 +246,7 @@ struct _EEprom
   uint16_t addr;
 
   uint8_t EECR, EEDR, EEARL, EEARH;
-  uint8_t mem[1024];		// atmega128 only...
+  uint8_t mem[4096];		// atmega128, atmega1284
 };
 #endif
 static EEprom *ee_new (int addr, char *name);
@@ -258,6 +258,22 @@ static void ee_reset (VDevice * dev);
 static void ee_add_addr (VDevice * vdev, int addr, char *name, int rel_addr,
 			 void *data);
 
+// dirty access to eeprom mem  from gdb
+uint8_t *ee_mem;
+uint8_t gdb_ee_read(int adr){
+  if(!ee_mem)
+    return 0;
+  if(adr < 4096)
+    return(ee_mem[adr]);
+  return 0;
+}
+void  gdb_ee_write(int adr,uint8_t data){
+  if(!ee_mem)
+    return;
+   if(adr < 4096)
+     ee_mem[adr]=data;
+  return;
+}
 
 VDevice *
 ee_create (int addr, char *name, int rel_addr, void *data)
@@ -273,6 +289,7 @@ ee_new (int addr, char *name)
   ee = avr_new (EEprom, 1);
   ee_construct (ee, addr, name);
   class_overload_destroy ((AvrClass *) ee, ee_destroy);
+  ee_mem=ee->mem;
   return ee;
 }
 
@@ -307,7 +324,7 @@ ee_read (VDevice * dev, int addr)
     return ee->EEARL;
 
   if (addr == (ee->addr) + 3)
-    return ee->EEARH & 3;
+    return ee->EEARH & 15;
 
   if (addr == (ee->addr) + 0)
     {
@@ -334,10 +351,10 @@ ee_write (VDevice * dev, int addr, uint8_t val)
     {
       if (val == 1)
 	{
-	  ee->EEDR = ee->mem[((ee->EEARH << 8 | ee->EEARL) & 0x3ff)];
+	  ee->EEDR = ee->mem[((ee->EEARH << 8 | ee->EEARL) & 0xfff)];
 /*
 	  avr_message ("triggered read from  0x%04x (%02x)\n",
-		       (ee->EEARH << 8 | ee->EEARL) & 0x3ff, ee->EEDR);
+		       (ee->EEARH << 8 | ee->EEARL) & 0xfff, ee->EEDR);
 */	  
 	  return;
 	}
@@ -345,8 +362,8 @@ ee_write (VDevice * dev, int addr, uint8_t val)
 	{
 
 	  avr_message ("triggered write to  0x%04x (%02x)\n",
-		       (ee->EEARH << 8 | ee->EEARL) & 0x3ff, ee->EEDR);
-	  ee->mem[((ee->EEARH << 8 | ee->EEARL) & 0x3ff)] = ee->EEDR;
+		       (ee->EEARH << 8 | ee->EEARL) & 0xfff, ee->EEDR);
+	  ee->mem[((ee->EEARH << 8 | ee->EEARL) & 0xfff)] = ee->EEDR;
 	}
     }
   else
@@ -357,7 +374,7 @@ static void
 ee_reset (VDevice * dev)
 {
   EEprom *ee = (EEprom *) dev;
-  memset (ee->mem, 0xff, 1024);
+  memset (ee->mem, 0xff, 4096);
   avr_message ("EEprom reset\n");
 }
 

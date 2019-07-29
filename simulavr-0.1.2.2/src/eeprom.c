@@ -392,7 +392,7 @@ eeprom_dump_core (EEProm *eeprom, FILE * f_core)
             line[0] = '\0';
         }
         snprintf (buf, 80, "%02x ", storage_readb (eeprom->stor, i));
-        strncat (line, buf, 80 - strlen(line) - 1);
+        strncat (line, buf, 80 - strnlen(line,79) - 1);
     }
     if (dup > 0)
     {

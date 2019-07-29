@@ -252,7 +252,7 @@ flash_dump_core (Flash *flash, FILE * f_core)
             line[0] = '\0';
         }
         snprintf (buf, 80, "%04x ", flash_read (flash, i));
-        strncat (line, buf, 80 - strlen(line) - 1);
+        strncat (line, buf, 80 - strnlen(line,79) - 1);
     }
     if (dup > 0)
     {
