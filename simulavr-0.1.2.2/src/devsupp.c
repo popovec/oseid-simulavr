@@ -66,7 +66,7 @@
 #include "avrcore.h"
 
 #include "devsupp.h"
-
+#include "OsEID.h"
 #ifndef DOXYGEN                 /* don't expose to doxygen */
 
 /*
@@ -215,6 +215,7 @@ dev_supp_get_sram_sz (DevSuppDefn *dev)
 #include "defn/mega16.h"
 #include "defn/mega103.h"
 #include "defn/mega128.h"
+#include "defn/OsEID128.h"
 
 #include "defn/43usb320.h"
 #include "defn/43usb325.h"
@@ -237,6 +238,7 @@ static DevSuppDefn *devices_supported[] = {
     &defn_atmega16,
     &defn_atmega103,
     &defn_atmega128,
+    &defn_OsEID128,
     &defn_at43usb351,
     &defn_at43usb353,
     &defn_at43usb355,

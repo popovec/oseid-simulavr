@@ -29,7 +29,7 @@
 #include "intvects.h"
 
 #include "display.h"
-
+#include "spm_helper.h"
 /****************************************************************************\
  *
  * AvrCore(AvrClass) Definition
@@ -66,6 +66,8 @@ struct _AvrCore
     Memory *mem;                /* memory space (gp reg, io reg, sram, ext
                                    sram, etc) */
     Stack *stack;               /* a stack implementaton */
+
+    SPMhelper *spmhelper;       /* SPM instruction helper */
 
     DList *breakpoints;         /* head of list of active breakpoints */
 
@@ -315,6 +317,12 @@ extern inline void
 avr_core_stack_push (AvrCore *core, int bytes, uint32_t val)
 {
     stack_push (core->stack, bytes, val);
+}
+/* spm emulation */
+extern inline void
+avr_core_spm(AvrCore *core, int reg0, int reg1, int Z)
+{
+    spm_run (core->spmhelper, reg0, reg1, Z);
 }
 
 /* Private

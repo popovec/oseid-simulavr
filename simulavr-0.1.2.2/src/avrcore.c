@@ -59,6 +59,7 @@
 #include "decoder.h"
 #include "sig.h"
 #include "devsupp.h"
+#include "spm_helper.h"
 
 /** \brief Flag for enabling output of instruction debug messages. */
 int global_debug_inst_output = 0;
@@ -444,6 +445,9 @@ avr_core_construct (AvrCore *core, DevSuppDefn *dev)
         core->stack = (Stack *)memstack_new (core->mem, 0x5d);
     }
 
+    /* SPM instruction helper */
+    core->spmhelper = (SPMhelper *) spmhelper_new (core->flash);
+
     /* Assuming the SREG is always at 0x5f. */
 
     core->sreg = (SREG *)avr_core_get_vdev_by_addr (core, 0x5f);
@@ -509,6 +513,7 @@ avr_core_destroy (void *core)
     class_unref ((AvrClass *)_core->gpwr);
     class_unref ((AvrClass *)_core->mem);
     class_unref ((AvrClass *)_core->stack);
+    class_unref ((AvrClass *)_core->spmhelper);
 
     dlist_delete_all (_core->breakpoints);
     dlist_delete_all (_core->clk_cb);

@@ -70,6 +70,7 @@ simulavr_SOURCES     = \
 	sig.h              \
 	spi.c              \
 	spi.h              \
+	spm_helper.c       \
 	sram.c             \
 	sram.h             \
 	stack.c            \
@@ -85,6 +86,8 @@ simulavr_SOURCES     = \
 	utils.c            \
 	utils.h            \
 	vdevs.h            \
+	OsEID.h		   \
+	OsEID.c		   \
 	defn/90s1200.h     \
 	defn/90s2313.h     \
 	defn/90s4414.h     \
@@ -93,6 +96,7 @@ simulavr_SOURCES     = \
 	defn/mega16.h      \
 	defn/mega103.h     \
 	defn/mega128.h     \
+	defn/OsEID128.h    \
 	defn/43usb320.h    \
 	defn/43usb325.h    \
 	defn/43usb326.h    \

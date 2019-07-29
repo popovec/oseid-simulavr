@@ -1167,7 +1167,7 @@ avr_op_ELPM_Z (AvrCore *core, uint16_t opcode, unsigned int arg1,
     if ((Rd == 30) || (Rd == 31))
         avr_error ("Results of operation are undefined");
 
-    avr_warning ("needs serious code review\n");
+//    avr_warning ("needs serious code review\n");
 
     /* FIXME: Is this correct? */
     /* Z is R31:R30 */
@@ -2941,7 +2941,13 @@ avr_op_SPM (AvrCore *core, uint16_t opcode, unsigned int arg1,
      * Flags      : None
      * Num Clocks : -
      */
-    avr_error ("This opcode is not implemented yet: 0x%04x", opcode);
+    int Z;
+
+    Z = ((avr_core_rampz_get (core) & 0x3f) << 16) +(avr_core_gpwr_get (core, 31) << 8) + avr_core_gpwr_get (core, 30);
+    avr_core_spm (core, avr_core_gpwr_get (core, 0), avr_core_gpwr_get (core, 1), Z);
+    avr_core_PC_incr (core, 1);
+    avr_core_inst_CKS_set (core, 2);
+
     return opcode_SPM;
 }
 

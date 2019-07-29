@@ -26,8 +26,8 @@
 #if defined (IN_DEVSUPP_C)
 /* *INDENT-OFF* */
 
-static DevSuppDefn defn_atmega128 = {
-    .name           = "atmega128",
+static DevSuppDefn defn_OsEID128 = {
+    .name           = "OsEID128",
     .stack_type     = STACK_MEMORY,
     .irq_vect_idx   = VTAB_ATMEGA128,
     .has_ext_io_reg = 1,
@@ -36,7 +36,7 @@ static DevSuppDefn defn_atmega128 = {
         .pc         = 2,
         .stack      = 0,
         .flash      = 128 * 1024,
-        .sram       = 4 * 1024,
+        .sram       = 16 * 1024,
         .eeprom     = 4 * 1024
     },
 
@@ -178,6 +178,38 @@ static DevSuppDefn defn_atmega128 = {
             .name = "PORTA",
             .ref_addr = 0x39,
             .reset_value = 0x00,
+            .rd_mask = 0xff,
+            .wr_mask = 0xff,
+        },
+       {
+            .addr = 0x3c,
+            .name = "EECR", 
+            .vdev_create = ee_create,
+            .reset_value = 0,
+            .rd_mask = 0xff,
+            .wr_mask = 0xff,
+        },
+        {
+            .addr = 0x3d,
+            .name = "EEDR",
+            .ref_addr = 0x3c,
+            .reset_value = 0,
+            .rd_mask = 0xff,
+            .wr_mask = 0xff,
+        },
+        {
+            .addr = 0x3e,
+            .name = "EEARL",
+            .ref_addr = 0x3c,
+            .reset_value = 0,
+            .rd_mask = 0xff,
+            .wr_mask = 0xff,
+        },
+        {
+            .addr = 0x3f,
+            .name = "EEARH",
+            .ref_addr = 0x3c,
+            .reset_value = 0,
             .rd_mask = 0xff,
             .wr_mask = 0xff,
         },
@@ -324,6 +356,22 @@ static DevSuppDefn defn_atmega128 = {
         { .addr = 0x9b, .name = "UCSR1A", },
         { .addr = 0x9c, .name = "UDR1", },
         { .addr = 0x9d, .name = "UCSR1C", },
+        {
+            .addr = 0xfe,
+            .name = "FIFO",
+            .vdev_create = oseid_create,
+            .reset_value = 0x00,
+            .rd_mask = 0xff,
+            .wr_mask = 0xff,
+        },
+        {
+            .addr = 0xff,
+            .name = "FIFOCTRL",
+            .ref_addr = 0xfe,
+            .reset_value = 0,
+            .rd_mask = 0xff,
+            .wr_mask = 0xff,
+        },
         IO_REG_DEFN_TERMINATOR
     }
 };
