@@ -1,0 +1,437 @@
+/* -*- mode: text -*-
+ * $Id: main.dox,v 1.2 2003/11/11 08:14:19 troth Exp $
+ *
+ ****************************************************************************
+ *
+ * simulavr - A simulator for the Atmel AVR family of microcontrollers.
+ * Copyright (C) 2001, 2002  Theodore A. Roth
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ ****************************************************************************
+ */
+
+/*
+ * This file is only for documentation. There should never be any real code in
+ * this file.
+ *
+ * Note: that each \page must be in it's own comment block. 
+ *
+ * Note: section and page names must only contain the characters [a-z0-9_].
+ *
+ * Note: You must use C++ style comments within code examples.
+ */
+
+/** \mainpage Simulavr Internals
+
+\section intro Introduction
+\addindex introduction
+
+This chapter documents the internals of simulavr for those wishing to work
+with the source code to fix bugs, add features, or to just see how it all
+works. If you only wish to know how to use simulavr, you don't need to read
+this.
+
+Internals Topics:
+
+- \link memory_management Memory Management \endlink
+- \link object_system Objects \endlink
+- \link insn_decoder Instruction Decoder \endlink
+- \link interrupts Interrupts \endlink
+- \link virtual_devs Virtual Devices \endlink
+- \link ext_devs External Devices \endlink
+- \link break_watch_pts Breakpoints and Watchpoints \endlink
+
+*/
+
+/** \page memory_management Memory Management
+\addindex memory management
+
+Every program ever written has had to deal with memory management.  Simulavr
+is no exception. For portability and to potentially aid in memory debugging,
+simulavr supplies it's own functions and macros for handling the allocation
+and releasing of memory resources.
+
+For memory which could be used by many differing parts of the simulator, an
+object referencing system has been implemented (see \ref object_system).
+
+\section memory_functions Memory Functions
+\addindex memory functions
+
+The following functions provide wrappers for all library functions that return
+memory which simulavr must manage.
+
+- avr_malloc()
+- avr_malloc0()
+- avr_realloc()
+- avr_strdup()
+- avr_free()
+
+All functions which return allocated memory will only return if the allocation
+was successful. If the allocation failed, an error message is issued and the
+program is aborted. Thus, the developer does not need write any code to check
+the returned value.
+
+\section memory_macros Memory Macros
+\addindex memory macros
+
+The following C-preprocessor macro definitions are provided for convenience
+and should be used instead of the underlying functions.  These macros relieve
+the programmer from having to perform manual type-casting thus making the code
+easier to read.
+
+- avr_new()
+- avr_new0()
+- avr_renew()
+
+*/
+
+/** \page object_system Objects
+\addindex objects
+
+Simulavr uses a simple object oriented system for handling the data structure
+creation and destruction. Since simulavr is written in C, a class system must be
+manually implemented and the basis for this class system is the AvrClass
+structure. All higher level structures are ultimately based on the AvrClass
+structure.
+
+How the AvrClass structure is defined is not as import as how it is used as a
+base or parent class structure. A concrete example of simulavr's object system
+will be discussed (see \ref example_derived_class), but before jumping into the
+example, the AvrClass method functions will be introduced.
+
+\section avrclass AvrClass Methods
+
+The following functions provide the user interfaces to the AvrClass structure.
+
+- class_new()
+- class_construct()
+- class_destroy()
+- class_overload_destroy()
+- class_ref()
+- class_unref()
+
+All classes must provide their own creation function, \<klass\>_new(). The
+purpose of the creation function is to:
+
+- Allocate memory for the class's data structure.
+- Call class_overload_destroy() to install the class's own destroy method.
+- Call the class's constructor method to fill in the data structure information.
+
+\section example_derived_class Derived Class Example
+\addindex example, derived class
+
+Simulavr's inheritance mechanism is a little more complicated than that of
+C++, but is still relatively easy to use once it is understood. An example
+should make it clear how the system works.
+
+First we need to create some objects. Assume that we need to add two new
+objects to simulavr, \c foo and \c bar. To keep things simple, they are both
+integers. Another requirement is that any time we need to access a \c foo, we'll
+also need to access a \c bar, but sometimes we only need a \c bar without a \c
+foo. Thus, we will have a class hierarchy \c FooClass->BarClass->AvrClass, or
+\c FooClass derives from \c BarClass which derives from \c AvrClass. To achieve
+this, we create the following two data structures:
+
+\addindex BarClass structure definition
+\addindex BarClass
+\addindex FooClass structure definition
+\addindex FooClass
+\code
+
+// Define BarClass with AvrClass as parent 
+
+typedef struct _BarClass BarClass;
+struct _BarClass {
+    AvrClass parent;
+    int      bar;
+};
+
+// Define FooClass with BarClass as parent 
+
+typedef struct _FooClass FooClass;
+struct _FooClass {
+    BarClass parent;
+    int      foo;
+};
+
+\endcode
+
+Notice that in both struct definitions, the parent element is not a
+pointer. When you allocate memory for a \c BarClass, you automatically
+allocate memory for an \c AvrClass at the same time. It's important that the
+parent is always the first element of any derived class structure.
+
+The trick here is that once we have a class object, we can get at any object
+in it's class hierarchy with a simple type-cast.
+
+\code
+
+void func( void )
+{
+    int num;
+    FooClass *Foo = foo_new( 12, 21 );
+
+    // get foo from FooClass 
+    num = Foo->foo;
+
+    // get bar from BarClass 
+    num = ((BarClass *)Foo)->bar;
+
+    class_unref( (AvrClass *)Foo );
+}
+
+\endcode
+
+Although the example above works, it assumes that the programmer knows what
+the \c FooClass and \c BarClass structures look like. The programmer has
+broken the encapsulation of both \c FooClass and \c BarClass objects. To solve
+this problem, we need to write method functions for both classes.
+
+Here's the methods for \c BarClass:
+
+\addindex BarClass
+\code
+
+// BarClass allocator 
+BarClass *bar_new( int bar )
+{
+    BarClass *bc;
+
+    bc = avr_new( BarClass, 1 );
+    bar_construct( bc, bar );
+    class_overload_destroy( (AvrClass *)bc, bar_destroy );
+
+    return bc;
+}
+
+// BarClass constructor 
+void bar_construct( BarClass *bc, int bar )
+{
+    class_construct( (AvrClass *)bc );
+    bc->bar = bar;
+}
+
+// BarClass destructor 
+void bar_destroy( void *bc )
+{
+    if (bc == NULL)
+        return;
+
+    class_destroy( bc );
+}
+
+// BarClass public data access methods 
+int  bar_get_bar( BarClass *bc )          { return bc->bar; }
+void bar_set_bar( BarClass *bc, int val ) { bc->bar = val;  }
+
+\endcode
+
+And here's the methods for \c FooClass:
+
+\addindex FooClass
+\code
+
+// FooClass allocator 
+FooClass *foo_new( int foo, int bar )
+{
+    FooClass *fc;
+
+    fc = avr_new( FooClass, 1 );
+    foo_construct( fc, foo, bar );
+    class_overload_destroy( (AvrClass *)fc, foo_destroy );
+
+    return fc;
+}
+
+// FooClass constructor 
+void foo_construct( FooClass *fc, int foo, bar )
+{
+    bar_construct( (BarClass *)fc, bar );
+    fc->foo = foo;
+}
+
+// FooClass destructor 
+void foo_destroy( void *fc )
+{
+    if (fc == NULL)
+        return;
+
+    class_destroy( fc );
+}
+
+// FooClass public data access methods 
+
+int  foo_get_foo( FooClass *fc )          { return fc->foo; }
+void foo_set_foo( FooClass *fc, int val ) { fc->foo = val;  }
+
+int  foo_get_bar( FooClass *fc )
+{
+    return bar_get_bar( (BarClass *)fc );
+}
+
+void foo_set_bar( FooClass *fc, int val )
+{
+    bar_set_bar( (BarClass *)fc, val );
+}
+
+\endcode
+
+Take a good look at the \c *_new(), \c *_construct() and \c *_destroy()
+functions in the above examples and make sure you understand what's going
+on. Of particluar importance is how the constructor and destructor functions
+are chained up along the various classes. This pattern is used extensively
+throughout the simulavr source code and once understood, makes some
+complicated concepts incredibly easy to implement.
+
+Now that we have the method functions, we can rewrite our original example
+function without the broken encapsulation.
+
+\code
+
+void func( void )
+{
+    int num;
+    FooClass *Foo = foo_new( 12, 21 );
+
+    num = foo_get_foo( Foo );
+    num = foo_get_bar( Foo );
+
+    class_unref( (AvrClass *)Foo );
+}
+
+\endcode
+
+Now that's better, but you might think that we are breaking encapsulation when
+we cast \c Foo to \c AvrClass. Well, in a way we are, but since \em all class
+objects \em must be derived from \c AvrClass either directly or indirectly,
+this is acceptable.
+
+\section object_refencing Object Referencing
+\addindex object referencing
+
+You may have noticed by this point that we haven't called avr_free() to free
+the memory we allocated for our objects. We called class_unref() instead. This
+mechanism allows us to store many references to a single object without having
+to keep track of all of them.
+
+The only thing we must do when we store a reference to an object in a new
+variable, is call class_ref() on the object. Then, when that stored reference
+is no longer needed, we simply call class_unref() on the object. Once the
+reference count reaches zero, the object's destroy method is automatically
+called for us. The only hard part for us is knowing when to ref and unref the
+object.
+
+Here's an example from the simulavr code for callbacks:
+
+\code
+
+void callback_construct( CallBack *cb,
+                         CallBack_FP func,
+                         AvrClass *data )
+{
+    if (cb == NULL)
+        avr_error( "passed null ptr");
+
+    class_construct( (AvrClass *)cb );
+
+    cb->func = func;
+
+    cb->data = data;
+    class_ref( data );
+}
+
+void callback_destroy( void *cb )
+{
+    CallBack *_cb = (CallBack *)cb;
+
+    if (cb == NULL)
+        return;
+
+    class_unref( _cb->data );
+
+    class_destroy( cb );
+}
+
+\endcode
+
+Notice that \c data is a pointer to \c AvrClass and thus can be any class
+defined by simulavr. \c CallBack is another class which happens to store a
+reference to \c data and must therefore call class_ref() on the \c data
+object. When the callback is destroyed (because the reference count reached
+zero), the callback destroy method calls class_unref() on the \c data
+object. It is assumed that the original reference to \c data still exists when
+the callback is created, but may or may not exist when the callback is
+destroyed.
+
+*/
+
+/** \page insn_decoder Instruction Decoder
+\addindex instruction decoder
+
+Instruction decoding and processing is implemented in the \c decode.c file.
+
+The heart of the instruction decoder is the decode_opcode() function.
+
+The decode_opcode() function examines the given opcode to determine which
+instruction applies and returns a pointer to a function to handle performing
+the instruction's operation. If the given opcode does not map to an
+instruction handler, \c NULL is returned indicating an invalid instruction.
+
+Nearly every instruction in Atmel's Instruction Set Data Sheet will have a
+handler function defined. Each handler will perform all the operations
+described in the data sheet for a given instruction. A few instructions have
+synonyms. For example, \c CBR is a synonym for \c ANDI.
+
+This should all be fairly straight forward.
+
+*/
+
+/** \page interrupts Interrupts
+\addindex interrupts
+
+\b FIXME: empty place holder
+
+*/
+
+/** \page virtual_devs Virtual Devices
+\addindex virtual devices
+
+\b FIXME: empty place holder
+
+*/
+
+/** \page ext_devs External Devices
+\addindex external devices
+
+\b FIXME: empty place holder
+
+*/
+
+/** \page break_watch_pts Breakpoints and Watchpoints
+\addindex breakpoints
+\addindex watchpoints
+
+Using gdb, it is possible to set breakpoints.
+
+Watch points are not currently implemented.
+
+\b This \b is \b only \b an \b idea \b right \b now: The way breakpoints are
+implemented within simulavr, it would be possible at init time to read a file
+containing breakpoint information. Then, as breakpoints are reached, have
+something happen which allows the user to check the state of the
+program. Anyone interested in implementing this, please step forward.
+
+*/

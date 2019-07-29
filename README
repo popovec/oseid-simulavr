@@ -1,0 +1,7 @@
+This is patched version of simulavr from debian/stretch. It is designed to test 
+OsEID project (https://oseid.sourceforge.io) compiled for AVR device.
+
+Please read OsEID dokumentation https://popovec.github.io/OsEID/ and comments
+in https://github.com/popovec/oseid/blob/master/src/targets/simulavr/Readme
+
+

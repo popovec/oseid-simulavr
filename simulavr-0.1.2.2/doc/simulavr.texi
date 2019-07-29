@@ -1,0 +1,603 @@
+%% -*-texinfo-*-
+\input texinfo
+@c
+@c $Id: simulavr.texi,v 1.23 2004/01/18 05:12:13 troth Exp $
+@c
+@c %**start of header
+@setfilename simulavr.info
+@settitle Simulavr
+@c %**end of header
+
+@include version.texi
+
+@c This is a dir.info fragment to support semi-automated addition of
+@c manuals to an info tree.
+@dircategory AVR Programming & development tools.
+@direntry
+* Simulavr: (simulavr).          A simulator for Atmel AVR microcontrollers.
+@end direntry
+
+@ifinfo
+This file documents the simulavr program.
+
+For simulavr version @value{VERSION}, @value{UPDATED}.
+
+Copyright @copyright{} 2001, 2002, 2003, 2004 Theodore A. Roth
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation approved
+by the Free Software Foundation.
+@end ifinfo
+
+@titlepage
+@title Simulavr
+@subtitle A simulator for the Atmel AVR family of microcontrollers.
+@subtitle For simulavr version @value{VERSION}, @value{UPDATED}.
+@author by Theodore A. Roth
+
+@page
+@hfill Send bugs and comments on Simulavr to@*
+@hfill @w{@email{simulavr-devel@@nongnu.org}}
+@vskip 0pt plus 1filll
+Copyright @copyright{} 2001, 2002, 2003, 2004 Theodore A. Roth
+@sp 2
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation approved
+by the Free Software Foundation.
+@end titlepage
+
+@comment @shortcontents
+@contents
+
+@c
+@c Top Node
+@c
+@node Top, Introduction, (dir), (dir)
+@comment  node-name,  next,  previous,  up
+
+@ifinfo
+This file documents the simulavr program for simulating Atmel
+AVR microcontrollers.
+
+For simulavr version @value{VERSION}, @value{UPDATED}.
+@end ifinfo
+
+@menu
+* Introduction::                What is simulavr?
+* Invoking::                    How to run simulavr
+* Using with GDB::              How to use simulavr with gdb
+* Display Coprocesses::         How to display the processors state
+* Internals::                   Developing simulavr
+* Problems::                    Reporting bugs
+* Concept Index::               
+@end menu
+
+@c
+@c Introduction
+@c
+@node Introduction, Invoking, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter Introduction: What is simulavr?
+@cindex introduction
+
+@quotation
+It's just a model.
+@sp 1
+--- Monty Python
+@end quotation
+@sp 1
+
+The Simulavr program is a simulator for the Atmel AVR family of
+microcontrollers.  Simulavr can be used either standalone or as a remote
+target for gdb.  When used in gdbserver mode, the simulator is used as a
+backend so that gdb can be used as a source level debugger for AVR
+programs.
+
+The official website for Simulavr is
+@uref{http://savannah.nongnu.org/projects/simulavr/}.
+
+Because it is protected by the GNU General Public License, users are
+free to share and change it.
+
+Simulavr was written by Theodore A. Roth
+
+@c
+@c Invoking
+@c
+@node Invoking, Using with GDB, Introduction, Top
+@comment  node-name,  next,  previous,  up
+@chapter Invoking Simulavr
+@cindex invoking
+@cindex running
+
+The format for running the simulavr program is:
+
+@example
+simulavr @var{options} @dots{} [flash_image]
+@end example
+
+If the optional @file{flash_image} file is supplied, it will be loaded
+into the flash program memory space of the virtual device.
+
+@menu
+* Aliasing::                    Simplifying invokation by aliasing.
+* Options::                     Command line options for simulavr.
+@end menu
+
+@c
+@c Aliasing
+@c
+@node  Aliasing, Options, Invoking, Invoking
+@comment  node-name,  next,  previous,  up
+@section Aliasing
+@cindex aliasing
+@cindex symbolic linking
+
+On most systems, if the simulavr executable is renamed to the name of an
+available device, it can be started without specifying the device
+type. The easiest way to achieve this is to create symbolic links for
+all the supported devices which point to the simulavr executable. For
+instance, this command will create a sym link for the at90s8515 device
+on a Unix system:
+
+@example
+ln -s simulavr at90s8515
+@end example
+
+Once the links have been created, the following two commands are
+equivalent:
+
+@example
+simulavr -d at90s8515 myprog.bin
+at90s8515 myprog.bin
+@end example
+
+@c
+@c Options
+@c
+@node Options,  , Aliasing, Invoking
+@comment  node-name,  next,  previous,  up
+@section Options
+@cindex options
+
+@noindent
+simulavr supports the following options:
+
+@table @code
+@cindex @code{--help}
+@item --help
+@itemx -h
+Print an informative help message describing the options and available
+device types, then exit.
+
+@cindex @code{--debug}
+@item --debug
+@itemx -D
+Print assembly instruction mnemonics and program counter (@samp{PC}) to
+output as device program is running.
+
+@cindex @code{--version}
+@item --version
+@itemx -v
+Print out the version number and exit.
+
+@cindex @code{--gdbserver}
+@item --gdbserver
+@itemx -g
+Run as a gdbserver process.
+
+@cindex @code{--gdb-debug}
+@item --gdb-debug
+@itemx -G
+Print out messages  for debugging the gdb remote serial protocol interface.
+
+@cindex @code{--port}
+@item --port @var{<port>}
+@itemx -p
+Listen for gdb connection on TCP port. If not specified, a default will
+be used. Run @samp{simulavr --help} to see what the default is. This
+option is ignored if the @option{--gdbserver} is not specified.
+
+@cindex @code{--device}
+@item --device @var{<dev>}
+@itemx -d
+Specify device type. The device types available for use with a specific
+version of simulavr can be obtained using the @option{--list-devices} option.
+
+@cindex @code{--eeprom-image}
+@item --eeprom-image @var{<img>}
+@itemx -e
+Specify an optional eeprom image file to be loaded into the device's
+eeprom memory space.
+
+@cindex @code{--eeprom-type}
+@item --eeprom-type @var{<type>}
+@itemx -E
+Specify the type of the eeprom image file. If not specified, the default
+is binary.
+
+@cindex @code{--flash-type}
+@item --flash-type @var{<type>}
+@itemx -F
+Specify the type of the flash image file. If not specified, the default
+is binary.
+
+@cindex @code{--list-devices}
+@item --list-devices
+@itemx -L
+Prints a list of supported devices to stdout and exits.
+
+@cindex @code{--disp-prog}
+@item --disp-prog @var{<prog>}
+@itemx -P
+Specify a program to be used to display register and memory information
+in real time as a child process. The display program can also be
+specified by setting the @code{SIM_DISP_PROG} environment variable.
+
+@cindex @code{--without-xterm}
+@item --without-xterm
+@itemx -X
+Don't start display coprocess program in an xterm.  This is useful if
+the display coprocess supplies it's own window for input and output,
+such as a process which uses a GUI.
+
+@cindex @code{--core-dump}
+@item --core-dump
+@itemx -C
+Dump a core memory image to file on exit. This isn't as useful as it
+sounds.  The display coprocess mechanism is much more informative.
+
+@cindex @code{--clock-freq}
+@item --clock-freq @var{<freq>}
+@itemx -c
+Set the simulated mcu clock freqency in Hz.
+
+@cindex @code{--breakpoint}
+@item --breakpoint @var{<addr>}
+@itemx -B
+Set a breakpoint at @var{<addr>}.  Note that the break address is
+interpreted as a byte address instead of a word address.  This makes
+it easier on the user since binutils, gcc and gdb all work in terms of
+byte addresses.  The address can be specified in any base (decimal,
+hexidecimal, octal, etc).
+ 
+@end table
+
+@c
+@c Using with GDB
+@c
+@node Using with GDB, Display Coprocesses, Invoking, Top
+@comment  node-name,  next,  previous,  up
+@chapter Using with GDB
+@cindex gdb
+@cindex gdbserver
+
+If you want to use gdb as a source-level debugger with
+simulavr running as a remote target, start simulavr with the
+@option{--gdbserver} or @option{-g} option. This will put simulavr
+into gdbserver mode. simulavr will then act as a TCP server
+program on the localhost listening for a connection from gdb.
+
+Once simulavr has accepted a connection from gdb, the two programs
+communicate via gdb's remote serial protocol (@pxref{Top, GDB Remote
+Serial Protocol, Protocol, gdb, Debugging with GDB}).
+
+Here's how you would start up simulavr in gdbserver mode:
+
+@example
+@cartouche
+$ simulavr -d at90s8515 -g
+@end cartouche
+@end example
+
+Here's a sample gdb session showing what to do on the gdb
+side to get gdb to talk to simulavr:
+
+@example
+@cartouche
+This GDB was configured as "--host=i686-pc-linux-gnu --target=avr".
+(gdb) file demo_kr.elf
+Reading symbols from demo_kr.elf...done.
+(gdb) target remote localhost:1212
+Remote debugging using localhost:1212
+0x0 in .__start_of_init__ ()
+(gdb) load
+Loading section .text, size 0x76 lma 0x0
+Start address 0x0 , load size 118
+Transfer rate: 944 bits in <1 sec, 29 bytes/write.
+(gdb) break main
+Breakpoint 1 at 0x6e: file demo_kr.c, line 17.
+(gdb) continue
+Continuing.
+
+Breakpoint 1, main () at demo_kr.c:17
+17          sbi(DDRC, (
+(gdb) quit
+The program is running.  Exit anyway? (y or n) y
+@end cartouche
+@end example
+
+Notice that simulavr knew nothing about the program to debug when it
+was started. Gdb was told which file to debug with the @samp{file}
+command. After gdb has read in the program and connected to simulavr,
+the program's instructions are downloaded into the simulator via the
+@samp{load} command. The @samp{load} command is not necessary if
+simulavr already has the program loaded into it's flash memory area. It
+is ok to issue multiple @samp{load} commands.
+
+Also, notice that no @samp{run} command was given to gdb. Gdb assumes
+that the simulator has started and is ready to continue. Giving gdb the
+@samp{run} command, will cause it to stop the current debug session and
+start a new one, which is not likely to be what you want to do.
+
+When specifying the remote target to connect to, it is sufficient to
+write ``target remote :1212'' instead of ``target remote localhost:1212''.
+
+Hitting @kbd{CTRL-c} in gdb can be used to interrupt the simulator while it is
+processing instructions and return control back to gdb. This is most
+useful when gdb is waiting for a response from the simulator and the
+program running in the simulator is in an infinite loop.
+
+Issuing a @samp{signal SIGxxx} command from gdb will send the signal to
+the simulator via a @i{continue with signal} packet. The simulator will
+process and interpret the signal, but will not pass it on to the AVR
+program running in the simulator since it really makes no sense to do
+so. In some circumstances, it may make sense to use the gdb signal
+mechanism as a way to initiate some sort of external stimulus to be
+passed on to the virtual hardware system of the simulator. Signals from
+gdb which are processed have the following meanings:
+
+@table @code
+@cindex SIGHUP, from gdb
+@item SIGHUP
+Initiate a reset of the simulator. (Simulates a hardware reset).
+
+@end table
+
+@c
+@c GDB Hints
+@c
+@menu
+* GDB Hints::                   
+* Building GDB::                
+@end menu
+
+@node GDB Hints, Building GDB, Using with GDB, Using with GDB
+@comment  node-name,  next,  previous,  up
+@section GDB Hints
+@cindex gdb, hints
+
+Since debugging an AVR program with gdb requires gdb to connect to a
+remote target (either simulavr or some other debugging tool, such as
+avarice), a series of commands must be issued every time gdb is started.
+The easiest way around this is to put the commands into a
+@file{.gdbinit} file in the project directory.  The following example is
+from a @file{.gdbinit} which I use for many projects.
+
+@example
+@cartouche
+
+## Print out structures in a sane way
+
+echo (gdb) set print pretty
+set print pretty
+
+## Use this for debugging the remote protocol. (Don't use unless
+## debugging simulavr or avr-gdb)
+
+#echo (gdb) set debug remote 1\n
+#set debug remote 1
+
+## If you don't want specify the program to debug when invoking gdb, 
+## you can tell gdb to read it in here. The file should be an elf file
+## compiled with debugging information (-g for C files and -gstabs for
+## asm files).
+
+#echo (gdb) file myprog.elf\n
+#file myprog.elf
+
+## Connect to the remote target via a TCP socket on host:port.
+
+echo (gdb) target remote localhost:1212\n
+target remote localhost:1212
+
+## If you are using simulavr as the remote target, this will upload
+## the program into flash memory for you.
+
+echo (gdb) load\n
+load
+
+## Set a break point at the beginning of main().
+
+echo (gdb) break main\n
+break main
+
+## Run the program up to the first break point.  Gdb's `run` command
+## does not work when using a remote target, must use continue.
+
+echo (gdb) continue\n
+continue
+
+@end cartouche
+@end example
+
+As you can see, I @code{echo} every command so I can see what gdb has
+done when it runs the commands in the @file{.gdbinit} file.
+
+@c
+@c Building GDB for AVR
+@c
+@node Building GDB,  , GDB Hints, Using with GDB
+@comment  node-name,  next,  previous,  up
+@section Building GDB for AVR
+@cindex gdb, building
+@cindex avr-gdb
+
+In order to use simulavr as a backend to gdb, you must build a special
+AVR version of gdb.  All gdb versions starting with gdb-5.2.1
+officially support the AVR target. You can just configure gdb with the
+@code{--target=avr} option.  For example, you can use this procedure
+to install avr-gdb in /usr/local/bin:
+
+@example
+@cartouche
+$ ./configure --target=avr
+$ make
+$ su
+# make install
+# exit
+@end cartouche
+@end example
+
+@c
+@c Display Coprocesses
+@c
+@node Display Coprocesses, Internals, Using with GDB, Top
+@comment  node-name,  next,  previous,  up
+@chapter Display Coprocesses
+@cindex display
+@cindex display protocol
+@cindex @code{SIM_DISP_PROG}
+@cindex @code{SIM_PIPE_FD}
+
+This chapter documents the protocol that simulavr uses to pass register
+and memory information to a display coprocess.
+
+A display coprocess is a separate program started by simulavr for the
+sole purpose of displaying register and memory information while an AVR
+program is running in the simulator. Using a separate program and a
+standardized communication protocol, keeps the simulavr code simpler and
+allows for a variety of display programs to be used.
+
+When the user asks simulavr to display register and memory information
+during execution, simulavr will start a coprocess to perform the display
+work. A pipe will be opened in simulavr into which the data will be
+written using the following commands:
+
+@multitable @columnfractions .30 .70
+
+@item @samp{q}
+@tab Quit.
+
+@item @samp{r<reg>:<val>}
+@tab Set register to val.
+
+@item @samp{p<val>}
+@tab Set program counter to val.
+
+@item @samp{i<reg>:<val>}
+@tab Set io register to val.
+
+@item @samp{I<reg>:<name>}
+@tab Set io register name.
+
+@item @samp{s<addr>,<len>:XX}
+@tab Set sram addrs to values (one XX pair per addr).
+
+@item @samp{e<addr>,<len>:XX}
+@tab Set eeprom addrs to values (one XX pair per addr).
+
+@item @samp{f<addr>,<len>:XXXX}
+@tab Set flash addrs to values (one XXXX quad per addr).
+
+@item @samp{n<clock_ticks>}
+@tab Update the number of clock ticks.
+
+@end multitable
+
+All values are hexidecimal numbers, except for <name> which is a string.
+
+In order for the display process to know which pipe to read the
+information, it must handle either the @samp{--pfd <fd>} option or check
+the @code{SIM_PIPE_FD} enviroment variable. The value passed using
+either method will be the file descriptor number of the pipe from which
+the display prgram will read the informtion.
+
+Simulavr will start all display programs like so (sizes are decimal
+numbers of bytes and sram_start is just the decimal address of the
+first byte of sram, usually 0x60 [96] or 0x100 [256]):
+
+@samp{<prog> --pfd <fd> <flash_size> <sram_size> <sram_start> <eeprom_size>}
+
+The user can specify the display program to use via the
+@samp{--disp-prog} option to simulavr or using the @code{SIM_DISP_PROG}
+environment variable. If both are not specified, then no display will be
+used.
+
+@c
+@c Simulavr Internals
+@c
+@node Internals, Problems, Display Coprocesses, Top
+@comment  node-name,  next,  previous,  up
+@chapter Simulavr Internals
+@cindex internals
+@cindex developing
+
+Simulavr internals are documented using the doxygen system to automate
+generation of the documentation from the source code comments. The
+documentation for the latest release is always available at:
+
+@uref{http://savannah.nongnu.org/download/simulavr/doc/internals_html/}
+
+The most up-to-date documents will most likely be those in the source
+code itself. If you wish to help develop simulavr, it is highly
+recommended that you get the latest source from cvs and consult the
+internals documents there.
+
+@c
+@c Problems
+@c
+@node Problems, Concept Index, Internals, Top
+@comment  node-name,  next,  previous,  up
+@chapter Reporting Bugs
+@cindex bugs
+@cindex problems
+
+If you find a bug in simulavr, please send electronic mail to
+@w{@email{simulavr-devel@@nongnu.org}}. Include the
+version number, which you can find by running @w{@samp{simulavr
+--version}}. Also include in your message the output that simulavr
+produced, a simple AVR program which reproduces the bug, and the
+output you expected. If you are using avr-gdb also include the
+version number reported by @w{@samp{avr-gdb --version}}.
+
+If you have other questions, comments or suggestions about simulavr,
+contact me via electronic mail at the above address.
+
+@c
+@c Concept Index
+@c
+@node Concept Index,  , Problems, Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Concept Index
+
+@printindex cp
+
+@bye

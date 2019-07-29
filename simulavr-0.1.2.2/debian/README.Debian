@@ -1,0 +1,9 @@
+simulavr for Debian
+-------------------
+
+simulavr-disp uses xterm to display Warning messages, therefore it has been
+added to Recommends. You can run simulavr-disp with -X or --without-xterm
+to avoid Warning messages and xterm dependencie.
+For more informations see http://bugs.debian.org/437711
+
+ -- Arthur Loiret <arthur.loiret@gmail.com>  Fri, 17 Aug 2007 09:46:21 +0200

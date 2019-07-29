@@ -1,0 +1,66 @@
+#!/usr/bin/make -f
+
+DEB_BUILD_GNU_TYPE      := $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_GNU_TYPE       := $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+
+CFLAGS = -Wall -g -std=gnu89
+LDFLAGS= -Wl,-z,defs
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+
+	./configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info \
+                --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
+                --disable-tests
+
+	touch $@
+
+build: build-stamp
+build-stamp: configure
+	dh_testdir
+
+	$(MAKE) CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+	touch $@
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f configure-stamp build-stamp
+	dh_clean
+	[ ! -f Makefile ] || $(MAKE) distclean
+
+binary-indep:
+
+binary-arch: install
+	dh_install -a --sourcedir=debian/tmp
+	dh_installchangelogs -a ChangeLog
+	dh_installdeb -a
+	dh_installdocs -a
+	dh_installinfo -a
+	dh_installman -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_strip -a
+	dh_makeshlibs -a
+	dh_shlibdeps -a
+	dh_gencontrol -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary: binary-arch binary-indep
+.PHONY: configure build clean binary-indep binary-arch binary install

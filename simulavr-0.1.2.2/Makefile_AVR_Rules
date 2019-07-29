@@ -1,0 +1,47 @@
+#
+# $Id: Makefile_AVR_Rules,v 1.6 2002/04/17 20:47:57 troth Exp $
+#
+###############################################################################
+#
+# simulavr - A simulator for the Atmel AVR family of microcontrollers.
+# Copyright (C) 2001, 2002  Theodore A. Roth
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+###############################################################################
+#
+# Extra Rules common to building avr objects.
+#
+
+DEFS                 =
+AM_CFLAGS               = -g -Wall $(AVR_TARGET)
+AM_CPPFLAGS             = -I$(srcdir) $(AVR_INC_DIR)
+CC                   = $(AVR_CC)
+
+.elf.hex:
+	$(AVR_OBJCOPY) -O ihex $< $@
+
+.elf.bin:
+	$(AVR_OBJCOPY) -O binary $< $@
+
+.elf.lst:
+	$(AVR_OBJDUMP) -h -S -D --stabs --disassemble-zeroes $< > $@
+
+.asm.elf:
+	$(AVR_AS) --gstabs $(AVR_TARGET) $(AM_CPPFLAGS) -o $@ $<
+
+SUFFIXES = .asm .elf .hex .bin .lst
+
+

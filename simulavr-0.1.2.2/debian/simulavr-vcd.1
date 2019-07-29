@@ -1,0 +1,31 @@
+.TH SIMULAVR-VCD 1 2004-04-10 "simulavr 0.1.2.1" "User Commands"
+.SH NAME
+simulavr-vcd \- simulate an Atmel AVR and output VCD (value change dump)
+.SH SYNOPSIS
+.B simulavr-vcd
+[\fB-p\fR|--\fBpfd\fR=\fIFD\fR] FLASH_SIZE SRAM_SIZE SRAM_START EEPROM_SIZE
+.SH DESCRIPTION
+Writes the output of simulavr from the pipe FD to a VCD (value change
+dump) file.
+.SS Options
+.TP
+\fB\-p\fR, \fB\-\-pfd\fR=\fIFD\fR
+file descriptor number of the pipe to which simulavr is writing its
+output
+.SH AUTHOR
+Written by Carsten Beth and Theodore A. Roth.
+
+This manual page was written by Shaun Jackman <sjackman@debian.org>
+for the Debian system.
+.SH "REPORTING BUGS"
+Report bugs to <simulavr-devel@mail.freesoftware.fsf.org>
+.SH COPYRIGHT
+Copyright 2002 Carsten Beth, Theodore A. Roth
+
+simulavr-vcd is free software, covered by the GNU General Public License,
+and you are welcome to change it and/or distribute copies of it under
+the conditions of the GNU General Public License.
+.SH "SEE ALSO"
+\fBsimulavr\fR(1), \fBsimulavr-disp\fR(1)
+
+http://savannah.nongnu.org/projects/simulavr/

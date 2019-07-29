@@ -1,0 +1,106 @@
+## -*- mode: rpm-spec; -*-
+##
+## $Id: simulavr.spec.in,v 1.9 2003/08/28 06:18:58 troth Exp $
+##
+## @configure_input@
+##
+
+%define debug_package %{nil}
+
+%define SimulavrVersion      @VERSION@
+
+Summary: A simulator for Atmel's AVR family of microcontrollers
+Name: simulavr
+Version: %{SimulavrVersion}
+Release: 1
+License: GPL
+Group: Development/Debuggers
+Source: http://savannah.nongnu.org/download/simulavr/simulavr-%{version}.tar.gz
+Buildroot: %{_tmppath}/%{name}-%{version}-root
+BuildRequires: ncurses-devel, glibc-devel, gcc, make, gzip, texinfo, doxygen
+Requires: avr-gdb >= 5.3
+Prereq: info
+%description
+Simulavr is a simulator for the Atmel AVR family of microcontrollers.
+Simulavr can be used either standalone or as a remote target for gdb.  When
+used as a remote target for gdb, the simulator is used as a backend to gdb
+such that gdb can be used as a source level debugger.
+
+## The simulavr-docs subpackage
+%package docs
+Summary: Documentation for Simulavr.
+Group: Documentation
+%description docs
+Documentation for simulavr in html, postscript and pdf formats.
+
+%prep
+%setup -q
+
+%build
+
+export CFLAGS="$RPM_OPT_FLAGS -fomit-frame-pointer -finline-functions -Wall"
+
+./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man \
+	--infodir=/usr/share/info --disable-tests --enable-ps
+
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+%makeinstall infodir=$RPM_BUILD_ROOT%{_infodir} \
+  prefix=$RPM_BUILD_ROOT%{_prefix}
+
+rm -f $RPM_BUILD_ROOT%{_infodir}/dir
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post
+[ -f %{_infodir}/simulavr.info ] && \
+	/sbin/install-info %{_infodir}/simulavr.info %{_infodir}/dir || :
+[ -f %{_infodir}/simulavr.info.gz ] && \
+	/sbin/install-info %{_infodir}/simulavr.info.gz %{_infodir}/dir || :
+
+%preun
+if [ $1 = 0 ]; then
+	[ -f %{_infodir}/avr-gdb.info ] && \
+		/sbin/install-info --delete %{_infodir}/simulavr.info %{_infodir}/dir  || :
+	[ -f %{_infodir}/avr-gdb.info.gz ] && \
+		/sbin/install-info --delete %{_infodir}/simulavr.info.gz %{_infodir}/dir  || :
+fi
+
+%files
+%defattr(-,root,root)
+/usr/bin/*
+%{_mandir}/man1/simulavr*
+%{_infodir}/*info*
+%doc AUTHORS ChangeLog COPYING INSTALL ProjSummary 
+%doc README README.gdb README.opcodes TODO
+
+%files docs
+%doc doc/html/*.html
+%doc doc/internals_html/*.html
+%doc doc/simulavr.ps
+#%doc doc/simulavr.pdf
+%doc doc/simulavr-internals.ps
+#%doc doc/simulavr-internals.pdf
+
+%changelog
+* Wed Aug 27 2003 Theodore A. Roth <troth@openavr.org>
+- Fix broken rpmbuild on RedHat-9.
+
+* Fri Jun 20 2003 Theodore A. Roth <troth@openavr.org>
+- Bump avr-gdb requirement to 5.3.
+
+* Sat Oct 12 2002 Theodore A. Roth <troth@openavr.org>
+- Add man pages.
+
+* Thu Sep 05 2002 Theodore A. Roth <troth@openavr.org>
+- Require gdb-5.2.1.
+- Don't build pdf dox.
+
+* Sun Feb 10 2002 Theodore A. Roth <troth@openavr.org>
+- Moved documentation into simulavr-docs subpackage.
+
+* Thu Feb 07 2002 Theodore A. Roth <troth@openavr.org>
+- Initial spec file.
