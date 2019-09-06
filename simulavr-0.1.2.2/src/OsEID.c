@@ -64,6 +64,9 @@
 // OsEID
 typedef struct _Oseid Oseid;
 
+#define OSEID_ATR "< 3b:f5:18:00:02:80:01:4f:73:45:49:44:1a\n"
+// full APDU (extended) for rsa 2048 sign = 5+2+257+2
+#define FIFO_LEN 266
 struct _Oseid
 {
   VDevice parent;
@@ -81,8 +84,9 @@ struct _Oseid
   uint8_t FIFO;
   uint8_t FIFOCTRL;
 
-  uint8_t fifo[256];
-  uint8_t flen;
+  uint8_t fifo[FIFO_LEN];
+  uint16_t flen;
+  uint8_t protocol;
 };
 
 static Oseid *oseid_new (int addr, char *name);
@@ -134,17 +138,26 @@ static uint8_t
 oseid_read (VDevice * dev, int addr)
 {
   Oseid *oseid = (Oseid *) dev;
-  uint8_t len = oseid->flen;
 
-  if (addr == (oseid->addr) + 1)
+// 0xF1 or 0xF0 - signalize protocol and character is available
+// 0 no character is available
+
+  if (addr == (oseid->addr) + 1)	// AVR IO REG 0xff
     {
-      avr_message ("input len %d\n", oseid->flen);
-      oseid->flen = 0;
-      return len;
+      if (oseid->flen)
+	return oseid->protocol;
+      return 0;
     }
-  if (addr == (oseid->addr) + 0)
-    return oseid->fifo[oseid->flen++];
 
+  if (addr == (oseid->addr) + 0)	// AVR IO REG 0xfe
+    {
+      uint8_t c;
+
+      c = oseid->fifo[0];
+      memmove (oseid->fifo, oseid->fifo + 1, FIFO_LEN - 1);
+      oseid->flen--;
+      return c;
+    }
   avr_error ("Bad address: 0x%04x", addr);
   return 0;
 }
@@ -159,6 +172,7 @@ oseid_write (VDevice * dev, int addr, uint8_t val)
     {
       if (val == 0)
 	oseid->flen = 0;
+
       if (val == 1)
 	{
 	  printf ("< ");
@@ -167,26 +181,78 @@ oseid_write (VDevice * dev, int addr, uint8_t val)
 	  printf ("\n");
 	  oseid->flen = 0;
 	}
+
       if (val == 2)
 	{
-	  char buffer[1024];
+	  char buffer[4096];
 	  int val;
 	  char *pos;
-	  printf ("> ");
 
-	  oseid->flen = 0;
-	  fflush (stdin);
-	  while (buffer != fgets (buffer, 1024, stdin));
-	  pos = buffer;
+	  for (;;)
+	    {
+	      oseid->flen = 0;
+	      fflush (stdin);
 
+	      for (;;)
+		{
+		  while (buffer != fgets (buffer, 1024, stdin));
+		  fprintf (stderr, "%s", buffer);
+		  if (buffer[0] == '>')
+		    break;
+		}
+	      // check special cases:
+	      if (0 == strncmp ("> R\n", buffer, 4))
+		{
+		  // card reset
+//                fprintf (stderr, "card reset, sending ATR\n");
+		  fprintf (stdout, OSEID_ATR);
+		  oseid->protocol = 0xf0;
+		  continue;
+		}
+	      if (0 == strncmp ("> D\n", buffer, 4))
+		{
+//                fprintf (stderr, "power down\n");
+		  continue;
+		}
+	      if (0 == strncmp ("> P\n", buffer, 4))
+		{
+		  // power up
+//                fprintf (stderr, "power up, sending ATR\n");
+		  fprintf (stdout, OSEID_ATR);
+		  oseid->protocol = 0xf0;
+		  continue;
+		}
+	      if (0 == strncmp ("> 0\n", buffer, 4))
+		{
+		  // protocol 0
+//                fprintf (stderr, "protocol 0\n");
+		  fprintf (stdout, "< 0\n");
+		  oseid->protocol = 0xf0;
+		  continue;
+		}
+	      if (0 == strncmp ("> 1\n", buffer, 4))
+		{
+		  // protocol 1
+//                fprintf (stderr, "protocol 1\n");
+		  fprintf (stdout, "< 1\n");
+		  oseid->protocol = 0xf1;
+		  continue;
+		}
+	      break;
+	    }
+
+	  pos = buffer + 2;
 	  while (1 == sscanf (pos, "%2x ", &val))
 	    {
-	      if (pos > buffer + 1024)
+	      if (pos > buffer + 4090)
 		break;
 	      pos += 3;
+	      if (oseid->flen >= FIFO_LEN)
+		break;
 	      oseid->fifo[oseid->flen] = val;
 	      oseid->flen++;
 	    }
+	  return;
 	}
       if (val == 3)
 	{
@@ -200,7 +266,10 @@ oseid_write (VDevice * dev, int addr, uint8_t val)
 
     }
   else if (addr == (oseid->addr) + 0)
-    oseid->fifo[oseid->flen++] = val;
+    {
+      if (oseid->flen <= FIFO_LEN)
+	oseid->fifo[oseid->flen++] = val;
+    }
   else
     avr_error ("Bad address: 0x%04x (want %x)", addr, oseid->addr);
 }
@@ -260,18 +329,23 @@ static void ee_add_addr (VDevice * vdev, int addr, char *name, int rel_addr,
 
 // dirty access to eeprom mem  from gdb
 uint8_t *ee_mem;
-uint8_t gdb_ee_read(int adr){
-  if(!ee_mem)
+uint8_t
+gdb_ee_read (int adr)
+{
+  if (!ee_mem)
     return 0;
-  if(adr < 4096)
-    return(ee_mem[adr]);
+  if (adr < 4096)
+    return (ee_mem[adr]);
   return 0;
 }
-void  gdb_ee_write(int adr,uint8_t data){
-  if(!ee_mem)
+
+void
+gdb_ee_write (int adr, uint8_t data)
+{
+  if (!ee_mem)
     return;
-   if(adr < 4096)
-     ee_mem[adr]=data;
+  if (adr < 4096)
+    ee_mem[adr] = data;
   return;
 }
 
@@ -289,7 +363,7 @@ ee_new (int addr, char *name)
   ee = avr_new (EEprom, 1);
   ee_construct (ee, addr, name);
   class_overload_destroy ((AvrClass *) ee, ee_destroy);
-  ee_mem=ee->mem;
+  ee_mem = ee->mem;
   return ee;
 }
 
@@ -352,10 +426,10 @@ ee_write (VDevice * dev, int addr, uint8_t val)
       if (val == 1)
 	{
 	  ee->EEDR = ee->mem[((ee->EEARH << 8 | ee->EEARL) & 0xfff)];
-/*
+#if 0
 	  avr_message ("triggered read from  0x%04x (%02x)\n",
 		       (ee->EEARH << 8 | ee->EEARL) & 0xfff, ee->EEDR);
-*/	  
+#endif
 	  return;
 	}
       if (val & 2)
