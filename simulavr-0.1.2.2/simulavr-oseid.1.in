@@ -1,12 +1,17 @@
-.TH SIMULAVR "1" "@DATE@" "simulavr @VERSION@" "User Commands"
+.TH SIMULAVR-OSEID "1" "@DATE@" "simulavr-oseid @VERSION@" "User Commands"
 .SH NAME
-simulavr \- Atmel AVR simulator
+simulavr-oseid \- Atmel AVR simulator
 .SH SYNOPSIS
-.B simulavr
+.B simulavr-oseid
 [\fIOPTIONS\fR]... -d DEVICE [\fIIMAGE\fR]
 .SH DESCRIPTION
 Simulate an avr device. The optional IMAGE file is loaded
 into the flash program memory space of the device.
+simulavr-oseid is derived from simulavr package and is
+modified for OsEID project
+
+https://sourceforge.net/projects/oseid/
+
 .SS Options
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -94,13 +99,21 @@ supports.
  at43usb326
 .SH "AUTHOR"
 Written by Theodore A. Roth.
+
+Modifications for OsEID project by Peter Popovec
 .SH "REPORTING BUGS"
-Report bugs to <simulavr-devel@nongnu.org>
+Report bugs to <popovec.peter@gmail.com>
 .SH "COPYRIGHT"
 Copyright 2001, 2002, 2003  Theodore A. Roth.
+
+Copyright 2020 Peter Popovec
 
 simulavr is free software, covered by the GNU General Public License,
 and you are welcome to change it and/or distribute copies of it under
 the conditions of the GNU General Public License.
 .SH "SEE ALSO"
-http://savannah.nongnu.org/projects/simulavr/
+https://github.com/popovec/oseid-simulavr
+
+https://github.com/popovec/oseid
+
+https://sourceforge.net/projects/oseid/

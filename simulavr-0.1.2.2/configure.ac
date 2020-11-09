@@ -25,7 +25,7 @@
 ###############################################################################
 
 AC_PREREQ(2.57)
-AC_INIT(simulavr, 0.1.2.2, simulavr-devel@nongnu.org)
+AC_INIT(simulavr-oseid, 0.1.2.2)
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADER([src/config.h:src/config-h.in])
 
@@ -327,9 +327,9 @@ AC_ARG_ENABLE(versioned-doc,
  esac], [versioned_doc=yes])
 
 if test "$versioned_doc" = "yes"; then
-    ac_doc_inst_dir='$(DESTDIR)$(datadir)/doc/simulavr-$(VERSION)'
+    ac_doc_inst_dir='$(DESTDIR)$(datadir)/doc/simulavr-oseid-$(VERSION)'
 else
-    ac_doc_inst_dir='$(DESTDIR)$(datadir)/doc/simulavr'
+    ac_doc_inst_dir='$(DESTDIR)$(datadir)/doc/simulavr-oseid'
 fi
 AC_SUBST(ac_doc_inst_dir)
 
@@ -461,12 +461,9 @@ AC_CONFIG_FILES([Makefile
                  regress/test_opcodes/Makefile
                  src/Makefile
                  src/getopt/Makefile
-                 src/disp-vcd/Makefile
-                 src/disp/Makefile
                  test_asm/Makefile
                  test_asm/test_8515/Makefile
                  test_c/Makefile
                  simulavr.spec
-                 simulavr.1
-                 simulavr-disp.1])
+                 simulavr-oseid.1])
 AC_OUTPUT

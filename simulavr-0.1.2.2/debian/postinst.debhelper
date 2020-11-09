@@ -1,5 +1,0 @@
-# Automatically added by dh_installinfo
-if [ "$1" = "configure" ]; then
-	install-info --quiet --section "AVR Programming #SECTION# development tools." "AVR Programming #SECTION# development tools." /usr/share/info/simulavr.info
-fi
-# End automatically added section

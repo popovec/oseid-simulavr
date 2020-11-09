@@ -1,15 +1,14 @@
-Source: simulavr
+Source: simulavr-oseid
 Section: electronics
 Priority: optional
-Maintainer: Debian QA Group <packages@qa.debian.org>
-Build-Depends: debhelper (>= 5), libncurses5-dev, avr-libc, gcc-avr, binutils-avr
+Maintainer: Peter Popovec <popovec.peter@gmail.com>
+Build-Depends: debhelper (>= 5), libncurses5-dev
 Standards-Version: 3.7.2
-Homepage: http://savannah.nongnu.org/projects/simulavr
+Homepage: https://github.com/popovec/oseid-simulavr
 
-Package: simulavr
+Package: simulavr-oseid
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Recommends: xterm, gcc-avr, binutils-avr
 Description: Atmel AVR simulator
  simulavr simulates the Atmel AVR family of micro-controllers,
  emulates a gdb remote target, and displays register and memory

@@ -3,6 +3,7 @@
 #
 # simulavr - A simulator for the Atmel AVR family of microcontrollers.
 # Copyright (C) 2001, 2002, 2003, 2004  Theodore A. Roth
+# Copyright (C) 2020 Peter Popovec <popovec.peter@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,13 +23,13 @@
 #
 
 EXTRA_DIST           = bootstrap Makefile_AVR_Rules README.gdb README.opcodes \
-                       ProjSummary misc simulavr.1.in simulavr-disp.1.in \
+                       ProjSummary misc simulavr-oseid.1.in \
                        README.cygwin \
                        ChangeLog-2003 \
                        ChangeLog-2002 \
                        ChangeLog-2001
 
-man_MANS             = simulavr.1 simulavr-disp.1
+man_MANS             = simulavr-oseid.1
 
 SUBDIRS              = src @ac_test_dirs@ @ac_doc_subdir@ @ac_regression_subdir@
 DIST_SUBDIRS         = src test_c test_asm doc regress

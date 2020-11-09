@@ -3,6 +3,7 @@
 #
 # simulavr - A simulator for the Atmel AVR family of microcontrollers.
 # Copyright (C) 2001, 2002, 2003  Theodore A. Roth
+# Copyright (C) 2020 Peter Popovec <popovec.peter@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,15 +22,15 @@
 
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS              = getopt @ac_curses_disp_dirs@ disp-vcd
-DIST_SUBDIRS         = getopt disp disp-vcd
+SUBDIRS              = getopt
+DIST_SUBDIRS         = getopt
 
 AM_CFLAGS            = @ENABLE_WARNINGS@ \
                        -I$(top_srcdir)/src/getopt
 
-bin_PROGRAMS         = simulavr
-simulavr_LDADD       = getopt/libgnugetopt.a
-simulavr_SOURCES     = \
+bin_PROGRAMS         = simulavr-oseid
+simulavr_oseid_LDADD       = getopt/libgnugetopt.a
+simulavr_oseid_SOURCES     = \
 	adc.c              \
 	adc.h              \
 	avrclass.c         \

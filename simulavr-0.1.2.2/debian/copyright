@@ -1,7 +1,7 @@
-This package was debianized by Shaun Jackman <sjackman@debian.org> on
-2002-10-05.
+This package was debianized by Peter Popovec <popovec.peter@gmail.com>
+2020-11-09.
 
-It was downloaded from http://savannah.nongnu.org/projects/simulavr
+It was downloaded from https://github.com/popovec/oseid-simulavr
 
 Upstream Author: Theodore A. Roth <troth@openavr.org>
 
@@ -9,6 +9,7 @@ Copyright:
 
 Copyright (C) 2001, 2002 Theodore A. Roth
 Copyright (C) 2002 Carsten Beth
+Copyright (C) 2020 Peter Popovec
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
