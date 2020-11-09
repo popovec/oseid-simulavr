@@ -15,7 +15,8 @@ do
 	then
 		continue
 	fi
-	if [ "$AUTOMAKE_VER" = "1.7" ]
+#	if [ "$AUTOMAKE_VER" = "1.7" ]
+	if true
 	then
 		status=""
 		ACLOCAL=aclocal`expr "$AUTOMAKE" : 'automake\(.*\)'`
@@ -40,7 +41,8 @@ do
 	then
 		continue
 	fi
-	if [ "$AUTOCONF_VER" = "2.57" ]
+#	if [ "$AUTOCONF_VER" = "2.57" ]
+	if true
 	then
 		status=""
 		AUTOHEADER=autoheader`expr "$AUTOCONF" : 'autoconf\(.*\)'`
