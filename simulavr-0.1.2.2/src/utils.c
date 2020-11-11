@@ -75,6 +75,12 @@ extern inline uint16_t set_bit_in_word (uint16_t src, int bit, int val);
 uint64_t
 get_program_time (void)
 {
+    static uint64_t result;
+
+// do not call gettimeofday() - this slows down the simulation
+// (due meltdown/spectre mitigation patches in kernel)
+
+/*
     uint64_t result;
     struct timeval tv;
 
@@ -82,8 +88,8 @@ get_program_time (void)
         avr_error ("Failed to get program time.");
 
     result = ((uint64_t) tv.tv_sec * 1000) + ((uint64_t) tv.tv_usec / 1000);
-
-    return result;
+*/
+    return ++result;
 }
 
 /***************************************************************************\
