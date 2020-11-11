@@ -1266,10 +1266,46 @@ avr_core_load_program (AvrCore *core, char *file, int format)
 }
 
 /** \brief Load a program from an input file. */
+#include "OsEID.h"
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
 int
 avr_core_load_eeprom (AvrCore *core, char *file, int format)
 {
-    EEProm *ee = (EEProm *)mem_get_vdevice_by_name (core->mem, "EEProm");
+// this is not working because src/memory.c: mem_get_vdevice_by_name() is deprecated
+//    EEProm *ee = (EEProm *)mem_get_vdevice_by_name (core->mem, "EEProm");
 
-    return eeprom_load_from_file (ee, file, format);
+//    return eeprom_load_from_file (ee, file, format);
+
+// here dirty hack for OsEID
+    int fd, res;
+    int addr;
+    uint8_t inst;
+
+    for (addr = 0; addr < 4096 ; addr++)
+        gdb_ee_write(addr, 0xff);
+
+    addr = 0;
+
+    fd = open (file, O_RDONLY);
+    if (fd < 0)
+        avr_error ("Couldn't open binary eeprom image file: %s: %s", file,
+                   strerror (errno));
+
+    while ((res = read (fd, &inst, sizeof (inst))) != 0)
+    {
+        if (res == -1)
+            avr_error ("Error reading binary eeprom image file: %s: %s", file,
+                       strerror (errno));
+        gdb_ee_write(addr, inst);
+        addr++;
+    }
+    printf("EEPROM load ok\n");
+    close (fd);
+
+    return 0;
 }

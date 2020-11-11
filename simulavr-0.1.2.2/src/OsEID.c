@@ -447,8 +447,9 @@ ee_write (VDevice * dev, int addr, uint8_t val)
 static void
 ee_reset (VDevice * dev)
 {
-  EEprom *ee = (EEprom *) dev;
-  memset (ee->mem, 0xff, 4096);
+//  EEprom *ee = (EEprom *) dev;
+// do not erase eeprom..
+//  memset (ee->mem, 0xff, 4096);
   avr_message ("EEprom reset\n");
 }
 
