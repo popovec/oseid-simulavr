@@ -2282,6 +2282,8 @@ static int
 avr_op_NOP (AvrCore *core, uint16_t opcode, unsigned int arg1,
             unsigned int arg2)
 {
+    static uint64_t oldCK;
+    uint64_t CK;
     /*
      * No Operation.
      *
@@ -2293,6 +2295,9 @@ avr_op_NOP (AvrCore *core, uint16_t opcode, unsigned int arg1,
      */
     avr_core_PC_incr (core, 1);
     avr_core_inst_CKS_set (core, 1);
+    CK = avr_core_CK_get (core);
+    fprintf(stderr, "NOP at address %x, clock cycles %"PRIu64", difference to previous CK: %"PRIu64"\n", avr_core_PC_get(core), CK, CK - oldCK);
+    oldCK = CK;
     return opcode_NOP;
 }
 
